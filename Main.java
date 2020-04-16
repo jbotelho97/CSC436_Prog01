@@ -205,6 +205,7 @@ public class Main {
                 }
                 if(isIn){
                     cand.remove(i);//remove the redundent string
+                    i--;
                     break;//end the loop
                 }
             }
