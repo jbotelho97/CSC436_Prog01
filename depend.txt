@@ -1,4 +1,3 @@
-A > BC
-CD > E
+A > BE
+C > BE
 B > D
-E > A

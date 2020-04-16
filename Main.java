@@ -56,16 +56,6 @@ public class Main {
             line = readTwo.readLine();
         }
 
-//        //Debugging reader - REMOVE in final version
-//        System.out.println("Attributes:");
-//        for(int i = 0; i <attr.size(); i++){
-//            System.out.println(attr.get(i));
-//        }
-//        System.out.println("Dependencies");
-//        for(int i = 0; i <dep.size(); i++){
-//            System.out.println(dep.get(i));
-//        }
-
         //Turning the dependencies ArrayList into a 2D array with column 1 being the left side
         //and column 2 being the right side of the dependency
         String[][] depend = new String[dep.size()][2];
@@ -97,11 +87,6 @@ public class Main {
             depend[i][0] = left;
             depend[i][1] = right;
         }
-
-//        //Debugging - REMOVE before submitting
-//        for(int i = 0; i < depend.length; i++){
-//            System.out.println("Left:" + depend[i][0] + " Right:" + depend[i][1] + ".");
-//        }
 
         //Spliting the attributes into three categories
         //Left side: attributes that only appear on the left side of the dependencies
@@ -157,17 +142,25 @@ public class Main {
         split[0] = left;//Change the split to the new left side
 
         //Now we need to find the cloture of attributes from the left string
-        //DEBUGGING
-        System.out.println("Left:" + split[0] + " Middle:" + split[1] + " Right:" + split[2]);
         //First we find the cloture from just the left side
-        int alen = attr.size();//Number of atributes
+        int alen = attr.size();//Number of attributes
         ArrayList cand = new ArrayList<String>();
         //We first check the attributes that only appear on the left if left is not blank
         if(split[0] != "") {
-            String test = split[1];//Get a string with the attributes tested
+            String test = split[0];//Get a string with the attributes tested
             String output = closure(test, depend, alen); //The output to see if the one attribute is a candidate key
             if (output.length() == alen) {//if it is
                 cand.add(test);
+            }
+            //If the left side does not give us a candidate key we try adding attributes from the middle
+            else{
+                for(int i = 0; i < split[1].length(); i++) {
+                    String nuTest = test + split[1].charAt(i);
+                    output = closure(nuTest, depend, alen);
+                    if (output.length() == alen) {//if it is
+                        cand.add(nuTest);
+                    }
+                }
             }
         }
         //Going down the list of dependencies (left side)
@@ -180,7 +173,7 @@ public class Main {
             else{//try adding an attribute to it
                 for(int j = 0; j < alen; j++){//go down the list of attributes
                     String c = (String) attr.get(j);
-                    //MAking sure the attribute we are adding is not already either on the right side
+                    //Making sure the attribute we are adding is not already either on the right side
                     //of the dependency, the same letter or already in the array list
                     if(c.compareTo(test) != 0 && c.compareTo(depend[i][1]) != 0 && !cand.contains((String) c)){
                         String nuTest = test + c; //making a new test
@@ -195,6 +188,28 @@ public class Main {
         }
 
         //NOTE: Need to find a way to trim keys that can be trimmed. E.g. BE when E is already in the list
+        //Trimming keys that can be trimmed
+        for(int i = 0; i < cand.size(); i++){
+            String c = (String) cand.get(i);
+            //Subloop to check with other elements
+            for(int j = (i + 1) % cand.size(); j != i; j = (j + 1) % cand.size()){
+                String test = (String) cand.get(j);
+                char[] ch = test.toCharArray();
+                //Looping through the char array
+                boolean isIn = true; //True if the second sting is inside the first string
+                for(int k = 0; k < ch.length; k++){
+                    //If the string contains those chars
+                    if(!nuContain(c, ch[k])){
+                        isIn = false;
+                    }
+                }
+                if(isIn){
+                    cand.remove(i);//remove the redundent string
+                    break;//end the loop
+                }
+            }
+
+        }
 
         if(cand.size() > 0){
             System.out.println("Candidate keys are: ");
@@ -232,29 +247,25 @@ public class Main {
 
         //This method calcualtes the closure of a string, based on the dependencies and the maximum number of attributes
     public static String closure(String st, String[][] dep, int max){
-        String result = st;
+        String result = st; //intial attributes given
 
-        boolean isChange = true;
+        boolean isChange = true;//True if the string was changed at all during the loop
         while(isChange){
-            int strlen = result.length();
+            int strlen = result.length();//length of the string at the start
             for(int i = 0; i < dep.length; i++){
-//                CharSequence leftSide = dep[i][0];
-//                if(result.contains(leftSide)){
-//                    result += dep[i][1];
-//                }
-                char[] atr = dep[i][0].toCharArray();
+                char[] atr = dep[i][0].toCharArray();//turn the left side of the dep. into a char array
                 boolean isIn = true;
                 for(int j = 0; j < atr.length; j++){
-                    if (!nuContain(result, atr[j])){
+                    if (!nuContain(result, atr[j])){//is that character already in the result string
                         isIn = false;
                     }
                 }
-                if(isIn && result.length() < max){
-                    result += dep[i][1];
-                    result = removeDup(result);
+                if(isIn && result.length() < max){//if it is in and we are not at the maximum amount of attributes  (might need to make < into <=)
+                    result += dep[i][1];//Add the attributes into result
+                    result = removeDup(result);//remove duplicates
                 }
             }
-            if(result.length() == strlen){
+            if(result.length() == strlen){//if there was no change to the string during the loop
                 isChange = false;
             }
         }
